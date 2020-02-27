@@ -2,6 +2,7 @@
 ;; inspiration from https://gist.github.com/huytd/6b785bdaeb595401d69adc7797e5c22c
 ;; TODO:
 ;; * have a less annoying development layout
+;; * better c style detection (see https://www.emacswiki.org/emacs/ProjectSettings)
 
 (add-to-list 'load-path "~/.emacs.d/config")
 
@@ -28,51 +29,63 @@
 (use-package ido
   :config
   (setq ido-enable-flex-matching t
-        ido-case-fold nil
-        )
-  (ido-mode 1)
-  )
+        ido-case-fold nil)
+  (ido-mode 1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; projectile
+
+(use-package projectile
+  :config
+  (projectile-mode +1)
+  (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CCLS
+
+(use-package ccls
+  :init
+  (setq ccls-executable "/usr/bin/ccls")
+  :hook
+  ((c-mode c++-mode) .
+   (lambda () (require 'ccls) (lsp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; LSP
 
 (use-package lsp-mode
+  :after
+  ccls
   :init
-  (setq lsp-enable-snippet t
+  (setq lsp-auto-configure nil
+        lsp-enable-snippet t
         lsp-prefer-flymake nil
-        lsp-auto-configure nil
-        lsp-clients-clangd-executable "clangd-9"
-        lsp-clients-clangd-args (list "-header-insertion-decorators=true"
-                                      "-all-scopes-completion=false"
-                                      "-completion-style=detailed" ;; or "bundled"
-                                      "-clang-tidy=false"
-                                      "-completion-style=false"
-                                      "-function-arg-placeholders=true"
-                                      "-header-insertion=false"
-                                      )
-        ;;lsp-clients-clangd-args (list "-log=verbose" "-pretty")
+        lsp-enable-indentation nil
+        lsp-enable-on-type-formatting nil
+        lsp-prefer-capf t
         )
+  (push "[/\\\\]build$" lsp-file-watch-ignored)
+  (push "[/\\\\]cross$" lsp-file-watch-ignored)
+  (push "[/\\\\]data$" lsp-file-watch-ignored)
+  :commands
+  lsp
   :config
   (require 'lsp-clients)
   (add-hook 'prog-major-mode #'lsp-prog-major-mode-enable)
   :hook
-  (c++-mode . lsp)
-  )
+  (c++-mode c-mode. lsp))
 
 (use-package lsp-ui
-  :disabled
   :after
   lsp-mode
   :config
   (setq lsp-ui-doc-enable nil
         lsp-ui-sideline-show-code-actions nil
         lsp-ui-sideline-show-diagnostics t
-        lsp-ui-sideline-ignore-duplicate t
-        )
-  (define-key lsp-ui-mode-map (kbd "C-c l") 'lsp-ui-imenu)
+        lsp-ui-sideline-ignore-duplicate t)
+  (define-key lsp-ui-mode-map (kbd "s-d l") 'lsp-ui-imenu)
   :hook
-  (lsp-mode . lsp-ui-mode)
-  )
+  (lsp-mode . lsp-ui-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; company
@@ -83,28 +96,12 @@
         company-auto-complete nil
         company-idle-delay 0
         company-require-match 'never
-        tab-always-indent 'complete
-        )
+        tab-always-indent 'complete)
   (defvar completion-at-point-functions-saved nil)
   :hook
   (after-init . global-company-mode)
   :config
-  (progn (delete 'company-clang company-backends)
-         (delete 'company-semantic company-backends)
-         (delete 'company-xcode company-backends)
-         (delete 'company-eclim company-backends)
-         )
-  (define-key company-active-map (kbd "TAB") 'company-complete-common)
-  (define-key company-active-map (kbd "<tab>") 'company-complete-common)
-  (defun company-indent-for-tab-command (&optional arg)
-    (interactive "P")
-    (let ((completion-at-point-functions-saved completion-at-point-functions)
-          (completion-at-point-functions '(company-complete-common-wrapper)))
-      (indent-for-tab-command arg)))
-  (defun company-complete-common-wrapper ()
-    (let ((completion-at-point-functions completion-at-point-functions-saved))
-      (company-complete-common)))
-  )
+  (setq company-backends nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; company-lsp
@@ -116,9 +113,7 @@
   (push 'company-lsp company-backends)
   :config
   (setq company-lsp-enable-snippet t
-        company-lsp-enable-recompletion t
-        )
-  )
+        company-lsp-enable-recompletion t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Emacs Lisp... for config editing :-P
@@ -127,8 +122,7 @@
   :after
   company
   :config
-  (push 'company-elisp company-backends)
-  )
+  (push 'company-elisp company-backends))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; sh
@@ -137,62 +131,48 @@
   :after
   company
   :config
-  (add-to-list 'company-backends '(company-shell company-shell-env company-fish-shell))
-  )
+  (add-to-list 'company-backends '(company-shell company-shell-env company-fish-shell)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Yasnippet
 
 (use-package yasnippet
   :config
-  (yas-global-mode 1)
-  )
+  (yas-global-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CMake stuff
+
+(use-package cmake-mode)
 
 (use-package company-cmake
   :after
   company
   :config
-  (add-to-list 'company-backends 'company-cmake)
-  )
+  (add-to-list 'company-backends 'company-cmake))
 
-(use-package cmake-mode)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; project stuff
 
-(use-package cmake-build
+(use-package dev-env
   :after
-  (lsp-mode cmake-mode)
+  (projectile ccls)
   :bind
-  ("C-c b i" . cmake-build-project-init)
-  :config
-  (cmake-build-mode 1)
+  ("s-d i" . dev-env-project-initialize)
+  ("s-d c" . dev-env-project-reconfigure)
+  ("<f9>" . projectile-compile-project)
+  ("<f10>" . recompile)
+  ("<f11>" . next-error)
+  ("<f12>" . previous-error)
   :hook
-  (cmake-build-init . (lambda ()
-                        (if cmake-build-build-dir
-                            (progn (setq lsp-clients-clangd-args
-                                         (cl-remove-if (lambda (arg)
-                                                (s-prefix? "-compile-commands-dir=" arg))
-                                              lsp-clients-clangd-args))
-                                   (push (format "-compile-commands-dir=%s"
-                                                 cmake-build-build-dir)
-                                         lsp-clients-clangd-args)
-                                   (if (lsp-workspaces)
-                                       (lsp-restart-workspace))))))
-  )
-
-(defun my:compile ()
-  ""
-  (interactive)
-  (if (and (fboundp 'cmake-build-is-active)
-           (cmake-build-is-active))
-      (cmake-build-compile)
-    (call-interactively #'compile)
-    )
-  )
-
-(global-set-key [f9] 'my:compile)
-(global-set-key [f10] 'recompile)
+  (dev-env-reconfigure . (lambda ()
+                           (if dev-env-build-dir
+                               (progn (setq ccls-initialization-options `(:compilationDatabaseDirectory ,dev-env-build-dir)
+                                            ;;ccls-args '("--log-file=ccls.log" "-v=1")
+                                            )
+                                      (if (lsp-workspaces)
+                                          (lsp-restart-workspace))
+                                      )))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; C/C++
@@ -200,20 +180,20 @@
 (font-lock-add-keywords 'c-mode
                         '(("\\<\\(FIXME\\):" 1 font-lock-warning-face prepend)
                           ("\\<\\(BUG\\):" 1 font-lock-warning-face prepend)
-                          ("\\<\\(TODO\\):" 1 font-lock-warning-face prepend)
-                          ))
+                          ("\\<\\(TODO\\):" 1 font-lock-warning-face prepend)))
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 (font-lock-add-keywords 'c++-mode
                         '(("\\<\\(alignas\\)\\>" . font-lock-keyword-face)
                           ("\\<\\(constexpr\\)\\>" . font-lock-keyword-face)
-			  ("\\<\\(export\\)\\>" . font-lock-keyword-face)
-                          ))
-(font-lock-add-keywords 'c++-mode
-                        '(("\\<\\(FIXME\\):" 1 font-lock-warning-face prepend)
+                          ("\\<\\(export\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(Q_OBJECT\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(Q_SIGNALS\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(Q_SLOTS\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(Q_EMIT\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(FIXME\\):" 1 font-lock-warning-face prepend)
                           ("\\<\\(BUG\\):" 1 font-lock-warning-face prepend)
-                          ("\\<\\(TODO\\):" 1 font-lock-warning-face prepend)
-                          ))
+                          ("\\<\\(TODO\\):" 1 font-lock-warning-face prepend)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GLSL/CUDA
@@ -226,13 +206,11 @@
   (add-to-list 'auto-mode-alist '("\\.glsl\\'" . glsl-mode))
   (add-to-list 'auto-mode-alist '("\\.vert\\'" . glsl-mode))
   (add-to-list 'auto-mode-alist '("\\.frag\\'" . glsl-mode))
-  (add-to-list 'auto-mode-alist '("\\.geom\\'" . glsl-mode))
-  )
+  (add-to-list 'auto-mode-alist '("\\.geom\\'" . glsl-mode)))
 
 (use-package cuda-mode
   :config
-  (add-to-list 'auto-mode-alist '("\\.cu\\'" . cuda-mode))
-  )
+  (add-to-list 'auto-mode-alist '("\\.cu\\'" . cuda-mode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Qt ui/rcc
@@ -240,24 +218,14 @@
 (use-package nxml-mode
   :config
   (add-to-list 'auto-mode-alist '("\\.ui\\'" . xml-mode))
-  (add-to-list 'auto-mode-alist '("\\.qrc\\'" . xml-mode))
-  )
+  (add-to-list 'auto-mode-alist '("\\.qrc\\'" . xml-mode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Qt qss
 
-(use-package nxml-mode
+(use-package css-mode
   :config
-  (add-to-list 'auto-mode-alist '("\\.qss\\'" . css-mode))
-  )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; buffer layout
-
-(use-package dev-layout
-  :bind
-  ("C-c l i" . dev-layout-init)
-  )
+  (add-to-list 'auto-mode-alist '("\\.qss\\'" . css-mode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; config bootstrap
@@ -296,8 +264,7 @@
               inhibit-startup-screen t
               overflow-newline-into-fringe t
               show-trailing-whitespace t
-              tool-bar-mode nil
-              )
+              tool-bar-mode nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; local configuration
@@ -313,7 +280,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (adoc-mode smart-tabs-mode yasnippet company-shell window-purpose cuda-mode glsl-mode company-glsl company-jedi use-package lsp-ui company-lsp blank-mode))))
+    (ccls projectile adoc-mode smart-tabs-mode yasnippet company-shell window-purpose cuda-mode glsl-mode company-glsl company-jedi use-package lsp-ui company-lsp blank-mode))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
