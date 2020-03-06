@@ -1,0 +1,35 @@
+
+(require 'dev-env-style)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(setq-default user-full-name "ME"
+              user-mail-address "me@host.tld"
+              indent-tabs-mode nil
+              query-user-mail-address nil)
+
+(custom-set-faces '(region ((t (:background "gray80")))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(c-add-style "my:c-style" ...)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(dev-env-style-register
+ (dev-env-make-style
+  :id
+  'my:style
+  :desc
+  "my amazing coding style"
+  :matches
+  '("dev/")
+  :init
+  '(setq-default indent-tabs-mode nil
+                 c-default-style "my:c-style"
+                 c-basic-offset 2
+                 sh-basic-offset 2)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(provide 'style-local)

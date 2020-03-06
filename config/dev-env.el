@@ -21,6 +21,8 @@
 (require 'dev-env-layout)
 (require 'dev-env-cmake)
 
+(require 'dev-env-style)
+
 (defgroup dev-env nil
   "Settings for dev-env."
   :group 'convenience)
@@ -69,6 +71,7 @@
                     (setq projectile-project-root (projectile-ensure-project nil)))))
          (dev-env-layout-init)
          (dev-env-project-reconfigure)
+	 (dev-env-style-detect (projectile-project-root))
          (run-hooks 'dev-env-init-hook)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -101,6 +104,10 @@
 	      dev-env-build-dir root
 	      projectile-project-compilation-dir ""))
        (t (message "project type '%s' is not supported" type))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'style-local nil 'noerror)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
