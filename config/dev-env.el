@@ -20,6 +20,7 @@
 (require 'projectile)
 (require 'dev-env-layout)
 (require 'dev-env-cmake)
+(require 'dev-env-meson)
 
 (require 'dev-env-style)
 
@@ -99,6 +100,11 @@
                (build-dir (dev-env-cmake--get-build-dir dev-env-cmake-build-type))
                (config-cmd (dev-env-cmake--get-configure-command root dev-env-cmake-build-type)))
           (dev-env--project-configure root dev-env-cmake-build-type build-dir config-cmd)))
+       ((eq type 'meson)
+        (let* ((dev-env-meson-build-type (dev-env-meson--ask-build-type))
+               (build-dir (dev-env-meson--get-build-dir dev-env-meson-build-type))
+               (config-cmd (dev-env-meson--get-configure-command root dev-env-meson-build-type)))
+          (dev-env--project-configure root dev-env-meson-build-type build-dir config-cmd)))
        ((eq type 'make)
 	(setq projectile-project-compilation-cmd "bear make"
 	      dev-env-build-dir root
