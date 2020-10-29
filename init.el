@@ -15,7 +15,6 @@
 (require 'cl-lib)
 
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
-                         ;;("elpa" . "https://elpa.gnu.org/packages/")
                          ))
 
 (unless (package-installed-p 'use-package)
@@ -45,7 +44,7 @@
 
 (use-package ccls
   :init
-  (setq ccls-executable "/usr/bin/ccls")
+  (setq ccls-args '("--log-file=ccls.log" "-v=1"))
   :hook
   ((c-mode c++-mode) .
    (lambda () (require 'ccls) (lsp))))
@@ -57,20 +56,20 @@
   :after
   ccls
   :init
-  (setq lsp-auto-configure nil
+  (setq lsp-auto-configure t
         lsp-enable-snippet t
-        lsp-prefer-flymake nil
+        lsp-prefer-flymake t
         lsp-enable-indentation nil
         lsp-enable-on-type-formatting nil
         lsp-prefer-capf t
         )
   (push "[/\\\\]build$" lsp-file-watch-ignored)
   (push "[/\\\\]cross$" lsp-file-watch-ignored)
+  (push "[/\\\\]crossbuild$" lsp-file-watch-ignored)
   (push "[/\\\\]data$" lsp-file-watch-ignored)
   :commands
   lsp
   :config
-  (require 'lsp-clients)
   (add-hook 'prog-major-mode #'lsp-prog-major-mode-enable)
   :hook
   (c++-mode c-mode. lsp))
@@ -102,18 +101,6 @@
   (after-init . global-company-mode)
   :config
   (setq company-backends nil))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; company-lsp
-
-(use-package company-lsp
-  :after
-  company
-  :init
-  (push 'company-lsp company-backends)
-  :config
-  (setq company-lsp-enable-snippet t
-        company-lsp-enable-recompletion t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Emacs Lisp... for config editing :-P
@@ -168,8 +155,7 @@
   (dev-env-reconfigure . (lambda ()
                            (if dev-env-build-dir
                                (progn (setq ccls-initialization-options `(:compilationDatabaseDirectory ,dev-env-build-dir)
-                                            ;;ccls-args '("--log-file=ccls.log" "-v=1")
-                                            )
+					    )
                                       (if (lsp-workspaces)
                                           (lsp-restart-workspace))
                                       )))))
@@ -275,7 +261,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (ccls projectile adoc-mode smart-tabs-mode yasnippet company-shell window-purpose cuda-mode glsl-mode company-glsl company-jedi use-package lsp-ui company-lsp blank-mode))))
+    (adoc-mode ccls company company-glsl company-jedi company-shell cuda-mode flycheck glsl-mode lsp-mode lsp-ui markdown-mode projectile smart-tabs-mode use-package window-purpose yasnippet))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
