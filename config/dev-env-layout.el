@@ -39,8 +39,8 @@
   (progn
     (setq split-height-threshold 1200)
     (setq split-width-threshold 2000)
-    (dev-env--layout-register-modes 'edit 'c-mode 'c++-mode 'python-mode 'shell-mode 'emacs-lisp-mode 'cuda-mode 'glsl-mode 'cmake-mode 'makefile-mode 'xml-mode 'css-mode 'html-mode)
-    (dev-env--layout-register-modes 'output 'compilation-mode 'completion-list-mode 'messages-buffer-mode 'lisp-interaction-mode 'help-mode)
+    (dev-env--layout-register-modes 'edit 'c-mode 'c++-mode 'dired-mode 'python-mode 'shell-mode 'emacs-lisp-mode 'cuda-mode 'glsl-mode 'cmake-mode 'makefile-mode 'xml-mode 'css-mode 'html-mode)
+    (dev-env--layout-register-modes 'output 'compilation-mode 'completion-list-mode 'special-mode 'messages-buffer-mode 'lisp-interaction-mode 'help-mode)
     ;; build it
     (purpose-compile-user-configuration)
     ;; resetting the windows

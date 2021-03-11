@@ -12,7 +12,6 @@
 (package-initialize)
 
 (require 'package)
-(require 'cl-lib)
 
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
                          ))
@@ -37,14 +36,14 @@
 (use-package projectile
   :config
   (projectile-mode +1)
-  (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
+  (define-key projectile-mode-map (kbd "M-p") 'projectile-command-map))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CCLS
 
 (use-package ccls
   :init
-  (setq ccls-args '("--log-file=ccls.log" "-v=1"))
+  ;;(setq ccls-args '("--log-file=ccls.log" "-v=1"))
   :hook
   ((c-mode c++-mode) .
    (lambda () (require 'ccls) (lsp))))
@@ -101,6 +100,16 @@
   (after-init . global-company-mode)
   :config
   (setq company-backends nil))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; some color in compilation buffer
+
+(use-package xterm-color
+  :init
+  (setq compilation-environment '("TERM=xterm-256color"))
+  (defun my/advice-compilation-filter (f proc string)
+    (funcall f proc (xterm-color-filter string)))
+  (advice-add 'compilation-filter :around #'my/advice-compilation-filter))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Emacs Lisp... for config editing :-P
@@ -160,6 +169,13 @@
                                           (lsp-restart-workspace))
                                       )))))
 
+(use-package dev-env-cmake
+  :after
+  (dev-env)
+  :config
+  (add-to-list 'dev-env-cmake-user-options "-k")
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; C/C++
 
@@ -170,16 +186,38 @@
 
 (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 (font-lock-add-keywords 'c++-mode
-                        '(("\\<\\(alignas\\)\\>" . font-lock-keyword-face)
-                          ("\\<\\(constexpr\\)\\>" . font-lock-keyword-face)
+                        '(
+			  ;; < C++11 et >= C++20
                           ("\\<\\(export\\)\\>" . font-lock-keyword-face)
+			  ;; C++11
+			  ("\\<\\(alignas\\)\\>" . font-lock-keyword-face)
+			  ;; C++20
+                          ("\\<\\(char8_t\\)\\>" . font-lock-type-face)
+                          ("\\<\\(concept\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(consteval\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(constinit\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(co_await\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(co_return\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(co_yield\\)\\>" . font-lock-keyword-face)
+			  ;; TM/TS
+                          ("\\<\\(atomic_cancel\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(atomic_commit\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(atomic_noexcept\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(refexpr\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(synchronized\\)\\>" . font-lock-keyword-face)
+			  ;; Qt
                           ("\\<\\(Q_OBJECT\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(Q_SIGNAL\\)\\>" . font-lock-keyword-face)
                           ("\\<\\(Q_SIGNALS\\)\\>" . font-lock-keyword-face)
+                          ("\\<\\(Q_SLOT\\)\\>" . font-lock-keyword-face)
                           ("\\<\\(Q_SLOTS\\)\\>" . font-lock-keyword-face)
                           ("\\<\\(Q_EMIT\\)\\>" . font-lock-keyword-face)
+			  ("\\<\\(Q_PROPERTY\\)\\>" . font-lock-keyword-face)
+			  ;; me
                           ("\\<\\(FIXME\\):" 1 font-lock-warning-face prepend)
                           ("\\<\\(BUG\\):" 1 font-lock-warning-face prepend)
-                          ("\\<\\(TODO\\):" 1 font-lock-warning-face prepend)))
+                          ("\\<\\(TODO\\):" 1 font-lock-warning-face prepend)
+			  ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GLSL/CUDA
@@ -241,6 +279,7 @@
 
 (set-fringe-mode '(nil . 0))
 (show-paren-mode t)
+(electric-pair-mode t)
 
 (setq-default column-number-mode t
               current-language-environment "UTF-8"
@@ -250,7 +289,8 @@
               inhibit-startup-screen t
               overflow-newline-into-fringe t
               show-trailing-whitespace t
-              tool-bar-mode nil)
+              tool-bar-mode nil
+              compilation-skip-threshold 2)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -260,8 +300,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   (quote
-    (adoc-mode ccls company company-glsl company-jedi company-shell cuda-mode flycheck glsl-mode lsp-mode lsp-ui markdown-mode projectile smart-tabs-mode use-package window-purpose yasnippet))))
+   '(xterm-color adoc-mode ccls company company-glsl company-jedi company-shell cuda-mode flycheck glsl-mode lsp-mode lsp-ui markdown-mode projectile smart-tabs-mode use-package window-purpose yasnippet)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

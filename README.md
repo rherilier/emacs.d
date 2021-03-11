@@ -28,3 +28,7 @@
 * ccls;
 * qmake;
 * bear.
+
+## TODO
+
+make config/dev-env-style.el uses a per style dedicated file to store the project/path instead of the actual hard-coded list
